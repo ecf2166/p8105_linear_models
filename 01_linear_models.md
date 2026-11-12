@@ -21099,3 +21099,52 @@ broom::tidy(fit) |>
 | Borogh: Brooklyn |  -49.754 |   0.000 |
 | Borogh: Queens   |  -77.048 |   0.000 |
 | Borogh: Bronx    |  -90.254 |   0.000 |
+
+## Diagnostics
+
+diagnostics is basically “look at the residuals”
+
+``` r
+modelr::add_residuals(nyc_airbnb, fit)
+```
+
+    ## # A tibble: 40,492 × 6
+    ##    price stars borough neighborhood room_type        resid
+    ##    <dbl> <dbl> <chr>   <chr>        <chr>            <dbl>
+    ##  1    99   5   Bronx   City Island  Private room      9.47
+    ##  2   200  NA   Bronx   City Island  Private room     NA   
+    ##  3   300  NA   Bronx   City Island  Entire home/apt  NA   
+    ##  4   125   5   Bronx   City Island  Entire home/apt  35.5 
+    ##  5    69   5   Bronx   City Island  Private room    -20.5 
+    ##  6   125   5   Bronx   City Island  Entire home/apt  35.5 
+    ##  7    85   5   Bronx   City Island  Entire home/apt  -4.53
+    ##  8    39   4.5 Bronx   Allerton     Private room    -34.5 
+    ##  9    95   5   Bronx   Allerton     Entire home/apt   5.47
+    ## 10   125   4.5 Bronx   Allerton     Entire home/apt  51.5 
+    ## # ℹ 40,482 more rows
+
+so we can look at residuals
+
+``` r
+nyc_airbnb |> 
+  modelr::add_residuals(fit) |> 
+  ggplot(aes(x=stars, y=resid)) +
+  geom_point()
+```
+
+    ## Warning: Removed 9962 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+<img src="01_linear_models_files/figure-gfm/unnamed-chunk-8-1.png" alt="" width="90%" />
+
+``` r
+nyc_airbnb |> 
+  modelr::add_residuals(fit) |> 
+  ggplot(aes(x=borough, y=resid)) +
+  geom_violin()
+```
+
+    ## Warning: Removed 9962 rows containing non-finite outside the scale range
+    ## (`stat_ydensity()`).
+
+<img src="01_linear_models_files/figure-gfm/unnamed-chunk-8-2.png" alt="" width="90%" />

@@ -76,16 +76,84 @@ Do a model comparison
 rmse(linear_mod, test_df)
 ```
 
-    ## [1] 0.1114619
+    ## [1] 0.1075082
 
 ``` r
 rmse(smooth_mod, test_df)
 ```
 
-    ## [1] 0.07057548
+    ## [1] 0.06622358
 
 ``` r
 rmse(wiggly_mod, test_df)
 ```
 
-    ## [1] 0.0779629
+    ## [1] 0.06254013
+
+## Repeat a bunch of times
+
+Use some nice tools
+
+``` r
+cv_df = 
+  crossv_mc(lidar, 100)
+
+cv_df |> pull(train) |> nth(3) |> as_tibble()
+```
+
+    ## # A tibble: 176 × 2
+    ##    range logratio
+    ##    <dbl>    <dbl>
+    ##  1   391  -0.0601
+    ##  2   393  -0.0419
+    ##  3   394  -0.0510
+    ##  4   396  -0.0599
+    ##  5   397  -0.0284
+    ##  6   400  -0.0399
+    ##  7   402  -0.0294
+    ##  8   405  -0.0476
+    ##  9   406  -0.0604
+    ## 10   408  -0.0312
+    ## # ℹ 166 more rows
+
+``` r
+cv_df = 
+  crossv_mc(lidar, 100) |> 
+  mutate(train = map(train, as_tibble),
+         test = map(test, as_tibble)
+         )
+```
+
+let’s fit models and get rmses for these
+
+``` r
+cv_df = 
+  cv_df |> 
+  mutate(
+    linear_fit = map(train, \(df) lm(logratio ~ range, data = df)),
+    smooth_fit = map(train, \(df) gam(logratio ~ s(range), data = df)),
+    wiggly_fit = map(train, \(df) gam(logratio ~ s(range, k = 30), sp = 10e-6, data = df))
+  ) |> 
+  mutate(
+    rmse_linear = map2_dbl(linear_fit, test, rmse),
+    rmse_smooth = map2_dbl(smooth_fit, test, rmse),
+    rmse_wiggly = map2_dbl(wiggly_fit, test, rmse)
+  )
+```
+
+Look at this!!
+
+``` r
+cv_df |> 
+  select(starts_with("rmse_")) |> 
+  pivot_longer(
+    everything(),
+    names_to = "model",
+    names_prefix = "rmse_",
+    values_to = "rmse"
+  ) |> 
+  ggplot(aes(x = model, y = rmse)) + 
+  geom_violin()
+```
+
+<img src="02_cross_validation_files/figure-gfm/unnamed-chunk-11-1.png" alt="" width="90%" />
